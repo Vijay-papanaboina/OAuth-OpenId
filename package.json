@@ -22,7 +22,8 @@
     "jsonwebtoken": "^9.0.3",
     "openid-client": "^6.8.1",
     "tsc": "^2.0.4",
-    "tsx": "^4.21.0"
+    "tsx": "^4.21.0",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

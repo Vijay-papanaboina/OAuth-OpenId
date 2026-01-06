@@ -3,6 +3,7 @@ import { code_verification } from "../data/data";
 import { providers } from "../helpers/providers.config";
 import { getConfig } from "../helpers/config.manager";
 import { saveUser } from "../repositories/user.repository";
+import logger from "../utils/logger";
 
 export async function getAuthorizationUrl(provider: string): Promise<{
   redirectTo: URL;
@@ -28,7 +29,10 @@ export async function getAuthorizationUrl(provider: string): Promise<{
   };
 
   const redirectTo: URL = client.buildAuthorizationUrl(config, parameters);
-  console.log("redirecting to", redirectTo.href);
+  logger.info("Redirecting to authorization URL", {
+    provider,
+    url: redirectTo.href,
+  });
   return { redirectTo, state };
 }
 
@@ -50,7 +54,7 @@ export async function exchangeCodeForTokens(
   });
 
   code_verification.delete(state);
-  console.log("Token Endpoint Response", tokens);
+  logger.debug("Token endpoint response received", { provider });
   return tokens;
 }
 
@@ -93,7 +97,7 @@ export async function fetchUserInfo(
     }
   }
 
-  console.log("User Info Response", user);
+  logger.debug("User info fetched", { provider, email: user.email });
   return user;
 }
 

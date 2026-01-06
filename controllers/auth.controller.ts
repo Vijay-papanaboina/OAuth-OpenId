@@ -5,6 +5,7 @@ import {
 } from "../services/auth.service";
 import { findUserById, deleteUser } from "../repositories/user.repository";
 import { signToken, verifyToken } from "../utils/jwt.util";
+import logger from "../utils/logger";
 
 const VALID_PROVIDERS = ["discord", "github", "google"];
 
@@ -25,7 +26,7 @@ export async function signIn(req: Request, res: Response): Promise<void> {
     });
     res.redirect(redirectTo.href);
   } catch (error) {
-    console.error("Sign-In Controller Error:", error);
+    logger.error("Sign-in failed", { provider, error });
     res.status(500).send("Something went wrong");
   }
 }
@@ -63,7 +64,7 @@ export async function callback(req: Request, res: Response): Promise<void> {
     res.clearCookie("oauth_state");
     res.redirect("http://localhost:5500/");
   } catch (error) {
-    console.error("Callback Controller Error:", error);
+    logger.error("OAuth callback failed", { provider, error });
     res.status(500).send("Authentication failed");
   }
 }

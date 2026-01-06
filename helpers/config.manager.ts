@@ -1,5 +1,6 @@
 import * as client from "openid-client";
 import { providers } from "./providers.config";
+import logger from "../utils/logger";
 
 // Cache for client configurations (discovered or manual)
 const configCache = new Map<string, client.Configuration>();
@@ -15,7 +16,7 @@ async function initConfigs(): Promise<void> {
       googleDetails.client_secret
     );
     configCache.set("google", googleConfig);
-    console.log("Google OIDC config discovered and cached.");
+    logger.info("Google OIDC config discovered and cached");
   }
 
   // Pre-build manual configs for Discord and GitHub
@@ -32,13 +33,15 @@ async function initConfigs(): Promise<void> {
         details.client_secret
       );
       configCache.set(provider, config);
-      console.log(`${provider} config cached.`);
+      logger.info(`${provider} config cached`);
     }
   }
 }
 
 // Initialize configs when module loads
-initConfigs().catch(console.error);
+initConfigs().catch((err) =>
+  logger.error("Failed to init configs", { error: err })
+);
 
 export function getConfig(provider: string): client.Configuration {
   const config = configCache.get(provider);
