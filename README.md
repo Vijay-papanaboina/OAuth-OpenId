@@ -4,21 +4,37 @@ A scalable, server-side OAuth 2.0 / OpenID Connect (OIDC) implementation using N
 
 **Current Status**: Fully implemented with **Discord**, **GitHub**, and **Google** support.
 
-This project implements the **Authorization Code Flow** with **PKCE** (Proof Key for Code Exchange) and extensive state verification, providing a secure foundation for any identity provider.
-
 ## 🚀 Key Features
 
-- **Provider Agnostic Design**: Built to support any OIDC-compliant provider (Google, Auth0, Okta, etc.) or plain OAuth 2.0 services (GitHub, Discord).
+- **Multi-Provider Support**: Discord, GitHub, Google (easily extensible).
+- **JWT Session Management**: Secure httpOnly cookies for authentication.
+- **Normalized User Data**: Consistent `username`, `email`, `avatar` across all providers.
 - **Security Best Practices**:
-  - **Strict PKCE**: Prevents authorization code interception.
-  - **State Verification**: Mitigates CSRF attacks.
-  - **Secure Session Cookies**: `httpOnly` and `SameSite` configurations.
-- **Configurable Architecture**: Endpoints and credentials are managed via environment variables, allowing you to switch providers without rewriting core logic.
+  - PKCE (Proof Key for Code Exchange)
+  - State verification (CSRF protection)
+  - Secure httpOnly cookies
 
-## 📋 Prerequisites
+## 📁 Project Structure
 
-- **Node.js** (v18+)
-- **Provider Credentials**: Client ID and Secret from your identity provider (e.g., Discord Developer Portal).
+```
+├── controllers/
+│   └── auth.controller.ts     # HTTP request handlers
+├── services/
+│   └── auth.service.ts        # Business logic (OAuth flows)
+├── repositories/
+│   └── user.repository.ts     # Data access layer
+├── helpers/
+│   ├── providers.config.ts    # Provider configurations
+│   └── config.manager.ts      # Config caching & discovery
+├── utils/
+│   └── jwt.util.ts            # JWT sign/verify utilities
+├── data/
+│   └── data.ts                # In-memory storage (users, PKCE)
+├── routes/
+│   ├── index.routes.ts
+│   └── auth.routes.ts
+└── index.ts                   # Express server entry
+```
 
 ## 🛠️ Installation
 
@@ -30,14 +46,10 @@ npm install
 
 ## ⚙️ Configuration
 
-Create a `.env` file in the root directory. The current configuration uses Discord as the example provider:
+Create a `.env` file:
 
 ```env
-# Server Config
-PORT=3000
-NODE_ENV=development
-
-# Discord Configuration
+# Discord
 DISCORD_ISSUER=https://discord.com
 DISCORD_AUTHORIZATION_ENDPOINT=https://discord.com/oauth2/authorize
 DISCORD_TOKEN_ENDPOINT=https://discord.com/api/oauth2/token
@@ -45,7 +57,7 @@ DISCORD_CLIENT_ID=your_discord_client_id
 DISCORD_CLIENT_SECRET=your_discord_client_secret
 DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/discord/callback
 
-# GitHub Configuration
+# GitHub
 GITHUB_ISSUER=https://github.com
 GITHUB_AUTHORIZATION_ENDPOINT=https://github.com/login/oauth/authorize
 GITHUB_TOKEN_ENDPOINT=https://github.com/login/oauth/access_token
@@ -53,43 +65,58 @@ GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 GITHUB_REDIRECT_URI=http://localhost:3000/api/auth/github/callback
 
-# Google Configuration (uses OIDC Discovery - no endpoint config needed)
+# Google (uses OIDC Discovery - no endpoint config needed)
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
 
-# Client App URL (For redirecting after login)
-CLIENT_URL=http://localhost:5500
+# JWT
+JWT_SECRET=your_super_secret_key
 ```
-
-> **Note**: To check if a provider supports OIDC Discovery, you can often omitting the manual endpoints in code (if supported), but manual configuration (as shown above) ensures compatibility with providers like Discord that don't strictly follow OIDC discovery standards.
 
 ## 🏃‍♂️ Usage
 
-1.  **Start the Server**:
-    ```bash
-    npm run dev
-    ```
-2.  **Test Discord**:
-    Navigate to `http://localhost:3000/api/auth/discord/sign-in`.
-3.  **Test GitHub**:
-    Navigate to `http://localhost:3000/api/auth/github/sign-in`.
-4.  **Test Google**:
-    Navigate to `http://localhost:3000/api/auth/google/sign-in`.
-5.  **Callback**:
-    The provider redirects back to the callback route, which exchanges the code for tokens, fetches the user profile (including private emails for GitHub), and redirects to the client app.
+```bash
+npm run dev
+```
 
-## �️ API Structure
+**Sign In URLs:**
 
-The project is structured to easily add new providers:
+- Discord: `http://localhost:3000/api/auth/discord/sign-in`
+- GitHub: `http://localhost:3000/api/auth/github/sign-in`
+- Google: `http://localhost:3000/api/auth/google/sign-in`
 
-- `helpers/auth.helper.ts`: Core OAuth logic with a dynamic `providers` configuration map. Exports `getConfig(provider)` to switch between settings at runtime.
-- `routes/auth.routes.ts`: Uses dynamic parameters (`/api/auth/:provider/...`) to handle requests for any supported provider using a single set of routes.
+## 🔌 API Endpoints
 
-## 🛡️ Security Implementation
+| Method | Endpoint                       | Description                        |
+| ------ | ------------------------------ | ---------------------------------- |
+| GET    | `/api/auth/:provider/sign-in`  | Initiate OAuth flow                |
+| GET    | `/api/auth/:provider/callback` | OAuth callback handler             |
+| GET    | `/api/auth/me`                 | Get current user (from JWT cookie) |
+| POST   | `/api/auth/logout`             | Clear session                      |
 
-- **In-Memory Store**: Uses a `Map` (in `data/data.ts`) to temporarily store PKCE verifiers and State. **Production Note**: Replace this with Redis or a database for persistent, distributed sessions.
-- **Token Handling**: Access tokens are used server-side to fetch user info and are not exposed to the client in the URL (only the user profile object is passed for demonstration).
+## 📦 User Data Model
+
+```typescript
+interface User {
+  id: string;
+  provider: string;
+  username: string;
+  email: string | null;
+  avatar: string | null;
+  raw: Record<string, any>; // Original provider data
+}
+```
+
+## 🔐 Auth Flow
+
+1. User clicks "Sign In with [Provider]".
+2. Server generates PKCE & state, redirects to provider.
+3. User authenticates, provider redirects to callback.
+4. Server exchanges code for tokens, fetches user info.
+5. Server normalizes data, stores in memory, creates JWT.
+6. JWT stored in httpOnly cookie, user redirected to frontend.
+7. Frontend calls `/api/auth/me` to retrieve user data.
 
 ## 📄 License
 

@@ -7,56 +7,88 @@
   </head>
   <body>
     <h1>OAuth OpenId</h1>
-    <button id="discordSignInButton" style="display: block">
-      Sign In with Discord
-    </button>
-    <button id="githubSignInButton" style="display: block">
-      Sign In with GitHub
-    </button>
-    <button id="googleSignInButton" style="display: block">
-      Sign In with Google
-    </button>
+    <div id="auth-buttons">
+      <button id="discordSignInButton" style="display: block">
+        Sign In with Discord
+      </button>
+      <button id="githubSignInButton" style="display: block">
+        Sign In with GitHub
+      </button>
+      <button id="googleSignInButton" style="display: block">
+        Sign In with Google
+      </button>
+    </div>
     <div style="display: none" id="user-info">
-      <img id="user-avatar" src="" alt="User Avatar" />
-      <span id="user-name"></span>
-      <span id="user-email"></span>
+      <img
+        id="user-avatar"
+        src=""
+        alt="User Avatar"
+        style="width: 50px; border-radius: 50%"
+        referrerpolicy="no-referrer"
+        onerror="this.src='https://via.placeholder.com/50?text=User'"
+      />
+      <p id="user-name"></p>
+      <p id="user-email"></p>
+      <button id="logoutButton">Logout</button>
     </div>
     <script>
-      const discordSignInButton = document.getElementById(
-        "discordSignInButton"
-      );
-      discordSignInButton.addEventListener("click", () => {
-        window.location.href = "http://localhost:3000/api/auth/discord/sign-in";
-      });
+      const API_BASE = "http://localhost:3000/api/auth";
 
-      const githubSignInButton = document.getElementById("githubSignInButton");
-      githubSignInButton.addEventListener("click", () => {
-        window.location.href = "http://localhost:3000/api/auth/github/sign-in";
-      });
+      // Button click handlers
+      document
+        .getElementById("discordSignInButton")
+        .addEventListener("click", () => {
+          window.location.href = `${API_BASE}/discord/sign-in`;
+        });
+      document
+        .getElementById("githubSignInButton")
+        .addEventListener("click", () => {
+          window.location.href = `${API_BASE}/github/sign-in`;
+        });
+      document
+        .getElementById("googleSignInButton")
+        .addEventListener("click", () => {
+          window.location.href = `${API_BASE}/google/sign-in`;
+        });
+      document
+        .getElementById("logoutButton")
+        .addEventListener("click", async () => {
+          await fetch(`${API_BASE}/logout`, {
+            method: "POST",
+            credentials: "include",
+          });
+          window.location.href = "/";
+        });
 
-      const googleSignInButton = document.getElementById("googleSignInButton");
-      googleSignInButton.addEventListener("click", () => {
-        window.location.href = "http://localhost:3000/api/auth/google/sign-in";
-      });
-      if (window.location.search) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const user = urlParams.get("user");
-        if (user) {
-          document.getElementById("user-info").style.display = "block";
-          document.getElementById("discordSignInButton").style.display = "none";
-          const userData = JSON.parse(decodeURIComponent(user));
-          const avatarUrl =
-            userData.avatar_url || userData.picture ||
-            `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`;
-          document.getElementById("user-avatar").src = avatarUrl;
-          document.getElementById("user-name").textContent = `user_name: ${
-            userData.username || userData.name || userData.login
-          }`;
-          document.getElementById("user-email").textContent = `user_email: ${
-            userData.email
-          }`;
+      // Check if user is authenticated
+      async function checkAuth() {
+        try {
+          const response = await fetch(`${API_BASE}/me`, {
+            credentials: "include",
+          });
+          if (response.ok) {
+            const userData = await response.json();
+            displayUser(userData);
+          }
+        } catch (error) {
+          console.log("Not authenticated");
         }
       }
+
+      function displayUser(userData) {
+        document.getElementById("auth-buttons").style.display = "none";
+        document.getElementById("user-info").style.display = "block";
+
+        // Backend now sends normalized data
+        document.getElementById("user-avatar").src = userData.avatar || "https://via.placeholder.com/50?text=User";
+        document.getElementById("user-name").textContent = `Name: ${userData.username}`;
+        document.getElementById("user-email").textContent = `Email: ${userData.email || "Not available"}`;
+        
+        console.log("User data:", userData);
+      }
+
+      // Check auth on page load
+      checkAuth();
     </script>
   </body>
 </html>
