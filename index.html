@@ -13,6 +13,9 @@
     <button id="githubSignInButton" style="display: block">
       Sign In with GitHub
     </button>
+    <button id="googleSignInButton" style="display: block">
+      Sign In with Google
+    </button>
     <div style="display: none" id="user-info">
       <img id="user-avatar" src="" alt="User Avatar" />
       <span id="user-name"></span>
@@ -26,13 +29,15 @@
         window.location.href = "http://localhost:3000/api/auth/discord/sign-in";
       });
 
-      const githubSignInButton = document.getElementById(
-        "githubSignInButton"
-      );
+      const githubSignInButton = document.getElementById("githubSignInButton");
       githubSignInButton.addEventListener("click", () => {
         window.location.href = "http://localhost:3000/api/auth/github/sign-in";
       });
 
+      const googleSignInButton = document.getElementById("googleSignInButton");
+      googleSignInButton.addEventListener("click", () => {
+        window.location.href = "http://localhost:3000/api/auth/google/sign-in";
+      });
       if (window.location.search) {
         const urlParams = new URLSearchParams(window.location.search);
         const user = urlParams.get("user");
@@ -41,15 +46,15 @@
           document.getElementById("discordSignInButton").style.display = "none";
           const userData = JSON.parse(decodeURIComponent(user));
           const avatarUrl =
-            userData.avatar_url ||
+            userData.avatar_url || userData.picture ||
             `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`;
           document.getElementById("user-avatar").src = avatarUrl;
-          document.getElementById(
-            "user-name"
-          ).textContent = `user_name: ${userData.username || userData.name || userData.login}`;
-          document.getElementById(
-            "user-email"
-          ).textContent = `user_email: ${userData.email || userData.email}`;
+          document.getElementById("user-name").textContent = `user_name: ${
+            userData.username || userData.name || userData.login
+          }`;
+          document.getElementById("user-email").textContent = `user_email: ${
+            userData.email
+          }`;
         }
       }
     </script>

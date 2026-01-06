@@ -10,7 +10,7 @@ const router = express.Router();
 router.get("/:provider/sign-in", async (req, res) => {
   const { provider } = req.params;
 
-  if (!["discord", "github"].includes(provider)) {
+  if (!["discord", "github", "google"].includes(provider)) {
     res.status(404).send("Invalid provider");
     return;
   }
@@ -41,7 +41,7 @@ router.get("/:provider/sign-in", async (req, res) => {
 router.get("/:provider/callback", async (req, res) => {
   const { provider } = req.params;
 
-  if (!["discord", "github"].includes(provider)) {
+  if (!["discord", "github", "google"].includes(provider)) {
     res.status(404).send("Invalid provider");
     return;
   }

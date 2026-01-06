@@ -1,58 +1,7 @@
 import * as client from "openid-client";
 import { code_verification } from "../data/data";
-
-interface ProviderConfig {
-  issuer: string;
-  authorization_endpoint: string;
-  token_endpoint: string;
-  userinfo_endpoint: string;
-  client_id: string;
-  client_secret: string;
-  redirect_uri: string;
-  scope: string;
-}
-
-const providers: Record<string, ProviderConfig> = {
-  discord: {
-    issuer: process.env.DISCORD_ISSUER!,
-    authorization_endpoint: process.env.DISCORD_AUTHORIZATION_ENDPOINT!,
-    token_endpoint: process.env.DISCORD_TOKEN_ENDPOINT!,
-    userinfo_endpoint: "https://discord.com/api/users/@me",
-    client_id: process.env.DISCORD_CLIENT_ID!,
-    client_secret: process.env.DISCORD_CLIENT_SECRET!,
-    redirect_uri: process.env.DISCORD_REDIRECT_URI!,
-    scope: "identify email",
-  },
-  github: {
-    issuer: process.env.GITHUB_ISSUER!,
-    authorization_endpoint: process.env.GITHUB_AUTHORIZATION_ENDPOINT!,
-    token_endpoint: process.env.GITHUB_TOKEN_ENDPOINT!,
-    userinfo_endpoint: "https://api.github.com/user",
-    client_id: process.env.GITHUB_CLIENT_ID!,
-    client_secret: process.env.GITHUB_CLIENT_SECRET!,
-    redirect_uri: process.env.GITHUB_REDIRECT_URI!,
-    scope: "read:user user:email",
-  },
-};
-
-function getConfig(provider: string) {
-  const details = providers[provider];
-  if (!details) throw new Error(`Provider ${provider} not configured`);
-
-  if (!details.client_id || !details.client_secret || !details.redirect_uri) {
-    throw new Error(`Missing environment variables for ${provider}`);
-  }
-
-  return new client.Configuration(
-    {
-      issuer: details.issuer,
-      authorization_endpoint: details.authorization_endpoint,
-      token_endpoint: details.token_endpoint,
-    },
-    details.client_id,
-    details.client_secret
-  );
-}
+import { providers } from "./providers.config";
+import { getConfig } from "./config.manager";
 
 async function getAuthorizationUrl(provider: string): Promise<{
   redirectTo: URL;
@@ -135,17 +84,27 @@ async function getUserInfo(
   try {
     const config = getConfig(provider);
     const details = providers[provider];
+    let user: any;
 
-    const response = await client.fetchProtectedResource(
-      config,
-      accessToken,
-      new URL(details.userinfo_endpoint),
-      "GET"
-    );
+    // For OIDC providers (Google) use fetchUserInfo which uses discovered endpoint
+    if (!details.userinfo_endpoint) {
+      user = await client.fetchUserInfo(
+        config,
+        accessToken,
+        client.skipSubjectCheck
+      );
+    } else {
+      // For OAuth2-only providers (Discord, GitHub) use manual fetch
+      const response = await client.fetchProtectedResource(
+        config,
+        accessToken,
+        new URL(details.userinfo_endpoint),
+        "GET"
+      );
+      user = await response.json();
+    }
 
-    console.log("User Info Response", await response.clone().json());
-
-    let user = (await response.json()) as any;
+    console.log("User Info Response", user);
 
     // GitHub specific: If email is null, fetch it from /user/emails
     if (provider === "github" && !user.email) {

@@ -2,8 +2,7 @@
 
 A scalable, server-side OAuth 2.0 / OpenID Connect (OIDC) implementation using Node.js, Express, and `openid-client` (v6).
 
-**Current Status**: Fully implemented with **Discord** and **GitHub** support.
-**Roadmap**: Designed to easily extend to other OIDC providers (Google, etc.).
+**Current Status**: Fully implemented with **Discord**, **GitHub**, and **Google** support.
 
 This project implements the **Authorization Code Flow** with **PKCE** (Proof Key for Code Exchange) and extensive state verification, providing a secure foundation for any identity provider.
 
@@ -54,6 +53,11 @@ GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 GITHUB_REDIRECT_URI=http://localhost:3000/api/auth/github/callback
 
+# Google Configuration (uses OIDC Discovery - no endpoint config needed)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
+
 # Client App URL (For redirecting after login)
 CLIENT_URL=http://localhost:5500
 ```
@@ -70,7 +74,9 @@ CLIENT_URL=http://localhost:5500
     Navigate to `http://localhost:3000/api/auth/discord/sign-in`.
 3.  **Test GitHub**:
     Navigate to `http://localhost:3000/api/auth/github/sign-in`.
-4.  **Callback**:
+4.  **Test Google**:
+    Navigate to `http://localhost:3000/api/auth/google/sign-in`.
+5.  **Callback**:
     The provider redirects back to the callback route, which exchanges the code for tokens, fetches the user profile (including private emails for GitHub), and redirects to the client app.
 
 ## �️ API Structure
