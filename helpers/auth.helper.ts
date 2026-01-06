@@ -1,21 +1,15 @@
 import * as client from "openid-client";
 import { code_verification } from "../data/data";
 
-if (!process.env.DISCORD_CLIENT_ID || !process.env.DISCORD_CLIENT_SECRET) {
+if (!process.env.DISCORD_CLIENT_ID || !process.env.DISCORD_CLIENT_SECRET || !process.env.DISCORD_ISSUER || !process.env.DISCORD_AUTHORIZATION_ENDPOINT || !process.env.DISCORD_TOKEN_ENDPOINT) {
   throw new Error("Missing environment variables");
 }
 
-// const config: client.Configuration = await client.discovery(
-//   new URL(process.env.DISCORD_AUTHORIZATION_SERVER),
-//   process.env.DISCORD_CLIENT_ID,
-//   process.env.DISCORD_CLIENT_SECRET
-// );
-
 const config = new client.Configuration(
   {
-    issuer: "https://discord.com",
-    authorization_endpoint: "https://discord.com/oauth2/authorize",
-    token_endpoint: "https://discord.com/api/oauth2/token",
+    issuer: process.env.DISCORD_ISSUER,
+    authorization_endpoint: process.env.DISCORD_AUTHORIZATION_ENDPOINT,
+    token_endpoint: process.env.DISCORD_TOKEN_ENDPOINT,
   },
   process.env.DISCORD_CLIENT_ID,
   process.env.DISCORD_CLIENT_SECRET
