@@ -10,6 +10,9 @@
     <button id="discordSignInButton" style="display: block">
       Sign In with Discord
     </button>
+    <button id="githubSignInButton" style="display: block">
+      Sign In with GitHub
+    </button>
     <div style="display: none" id="user-info">
       <img id="user-avatar" src="" alt="User Avatar" />
       <span id="user-name"></span>
@@ -23,6 +26,13 @@
         window.location.href = "http://localhost:3000/api/auth/discord/sign-in";
       });
 
+      const githubSignInButton = document.getElementById(
+        "githubSignInButton"
+      );
+      githubSignInButton.addEventListener("click", () => {
+        window.location.href = "http://localhost:3000/api/auth/github/sign-in";
+      });
+
       if (window.location.search) {
         const urlParams = new URLSearchParams(window.location.search);
         const user = urlParams.get("user");
@@ -30,14 +40,16 @@
           document.getElementById("user-info").style.display = "block";
           document.getElementById("discordSignInButton").style.display = "none";
           const userData = JSON.parse(decodeURIComponent(user));
-          const avatarUrl = `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`;
+          const avatarUrl =
+            userData.avatar_url ||
+            `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.png`;
           document.getElementById("user-avatar").src = avatarUrl;
           document.getElementById(
             "user-name"
-          ).textContent = `user_name: ${userData.username}`;
+          ).textContent = `user_name: ${userData.username || userData.name || userData.login}`;
           document.getElementById(
             "user-email"
-          ).textContent = `user_email: ${userData.email}`;
+          ).textContent = `user_email: ${userData.email || userData.email}`;
         }
       }
     </script>
